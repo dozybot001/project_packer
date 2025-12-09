@@ -1,10 +1,10 @@
 # Code Packer
 
+![](https://cdn.jsdelivr.net/gh/dozybot001/blogimage/20251209210737996.png)
+
 **让 AI 真正读懂你的项目。**
 
 这是一个专为 LLM (ChatGPT, Claude, Gemini) 辅助编程设计的**上下文构建工具**。它能将你的整个工程文件夹瞬间转化为 AI 易读的、结构化的单个 Prompt 文件。
-  
-![](https://cdn.jsdelivr.net/gh/dozybot001/blogimage/20251209210737996.png)
 
 ## 🎯 为什么你需要这个工具？
 
