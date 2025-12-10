@@ -57,7 +57,9 @@ header { margin-bottom: 40px; text-align: left; }
 h1 {
     font-size: 2rem; margin: 0; letter-spacing: -0.02em;
     background: linear-gradient(135deg, #fff 30%, #949ba4 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .tag {
@@ -331,23 +333,200 @@ pre {
 .toast.success { border-left: 3px solid var(--success-color); }
 .toast.error { border-left: 3px solid #ef4444; }
 
-@keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+/* ================= Sidebar & Bookmark 交互优化 (Revised) ================= */
 
-/* ================= Mobile Adaption ================= */
-@media (max-width: 600px) {
-    .container { padding: 24px; }
-    .dashboard-grid { grid-template-columns: 1fr; }
+/* --- 1. 滚动条美化 (解决白色滚动条扎眼的问题) --- */
+.sidebar-content::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+    border: 1px solid var(--card-bg); /* 增加一点边距感 */
+}
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* --- 2. 书签入口 (Button) --- */
+#guideBookmark {
+    position: fixed;
+    left: 0;
+    top: 15%;
+    transform: translateY(-50%); 
+    background: var(--panel-bg);
+    border: 1px solid var(--border-subtle);
+    border-left: none;
+    padding: 16px 6px;
+    border-radius: 0 12px 12px 0;
+    cursor: pointer;
+    z-index: 50; 
+    box-shadow: 4px 0 15px rgba(0,0,0,0.3);
     
-    .hero-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
+    /* 关键：动画曲线与 Sidebar 保持完全一致 */
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s, box-shadow 0.2s;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 基础悬浮效果 */
+#guideBookmark:hover {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-50%) scale(1.05); /* 微微放大 */
+}
+
+.bookmark-icon { font-size: 1.2rem; }
+.bookmark-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+.bookmark-arrow {
+    font-size: 1rem;
+    transition: transform 0.4s ease;
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+/* --- 3. Sidebar 容器 (调整动画逻辑) --- */
+#hiddenSidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 600px; /* 固定宽度 */
+    height: 100vh;
+    background: var(--bg-color);
+    z-index: 40;
+    border-right: 1px solid var(--border-subtle);
+    
+    /* 核心修改：改为完全移出屏幕，而不是视差淡入 */
+    transform: translateX(-100%); 
+    opacity: 1; /* 移除透明度变化，让它实体滑入滑出 */
+    pointer-events: none; /* 关闭时不可点击 */
+    
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); /* 必须与 Bookmark 一致 */
+    box-shadow: inset -10px 0 20px rgba(0,0,0,0.5);
+}
+
+.sidebar-content {
+    height: 100%;
+    overflow-y: auto; /* 滚动条在这里 */
+    padding: 40px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* --- 4. 打开状态 (Open State) --- */
+
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* Sidebar 滑出归位 */
+body.sidebar-open #hiddenSidebar {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* 书签按钮跟随滑出 */
+body.sidebar-open #guideBookmark {
+    /* 这里的 600px 必须与 Sidebar 宽度一致 */
+    transform: translate(600px, -50%); 
+    background: var(--card-bg);
+}
+
+/* 修复需求1：关闭时的悬浮效果 */
+/* 我们使用高优先级的选择器来确保打开状态下 hover 依然生效 */
+body.sidebar-open #guideBookmark:hover {
+    background: var(--accent-primary); /* 保持蓝色高亮 */
+    color: white;
+    /* 保持位置偏移的同时进行缩放 */
+    transform: translate(600px, -50%) scale(1.05); 
+    box-shadow: -4px 0 20px rgba(59, 130, 246, 0.4);
+}
+
+/* 箭头旋转 */
+body.sidebar-open .bookmark-arrow {
+    transform: rotate(180deg);
+}
+
+/* 主容器推移 */
+#mainContainer {
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, filter 0.5s;
+    transform-origin: center left;
+}
+body.sidebar-open #mainContainer {
+    transform: translateX(600px); /* 保持一致的移动距离 */
+    opacity: 0.3;
+    pointer-events: none;
+    filter: blur(4px);
+}
+
+/* --- 5. Markdown 样式微调 --- */
+.markdown-body {
+    background: transparent !important;
+    font-family: var(--font-ui) !important;
+    color: var(--text-secondary) !important;
+}
+.markdown-body h1 {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-subtle);
+    
+    /* 核心修复：取消全局 h1 的渐变字效果 */
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+    -webkit-background-clip: border-box !important;
+    background-clip: border-box !important;
+}
+.markdown-body h2 { 
+    color: var(--text-primary); 
+    border-bottom-color: var(--border-subtle); 
+}
+
+.markdown-body a { color: var(--accent-primary); }
+.markdown-body pre { background: #111 !important; border-radius: 8px; }
+
+/* 关闭按钮 */
+.close-sidebar-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none; border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+.close-sidebar-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* --- 6. 移动端适配 --- */
+@media (max-width: 800px) {
+    #hiddenSidebar { width: 85%; }
+    
+    /* 移动端 Sidebar 占据 85%，书签按钮需要移动 85vw */
+    body.sidebar-open #hiddenSidebar { transform: translateX(0); }
+    
+    body.sidebar-open #mainContainer { 
+        transform: translateX(85%); 
     }
     
-    .hero-links {
-        width: 100%;
-        margin-top: 4px;
-        padding-top: 12px;
-        border-top: 1px solid var(--border-subtle);
+    body.sidebar-open #guideBookmark {
+        transform: translate(85vw, -50%);
+    }
+
+    /* 移动端 hover 状态修正 */
+    body.sidebar-open #guideBookmark:hover {
+        transform: translate(85vw, -50%) scale(1.05);
     }
 }

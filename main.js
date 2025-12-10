@@ -322,3 +322,68 @@ function generateTree(paths) {
     }
     return Object.keys(tree).length ? (paths.length > 1 ? "Root/\n" : "") + print(tree) : "";
 }
+
+// ================= Sidebar & README 逻辑 =================
+
+let readmeLoaded = false;
+// 使用本地路径，并添加时间戳以避免缓存问题
+const REPO_README_URL = "./README.md";
+
+async function toggleSidebar() {
+    const body = document.body;
+    const isOpen = body.classList.contains('sidebar-open');
+    
+    if (isOpen) {
+        // 关闭
+        body.classList.remove('sidebar-open');
+        // 允许主界面点击
+        document.getElementById('mainContainer').onclick = null;
+    } else {
+        // 打开
+        body.classList.add('sidebar-open');
+        
+        // 点击主界面也可以关闭
+        setTimeout(() => {
+            document.getElementById('mainContainer').onclick = toggleSidebar;
+        }, 100);
+
+        // 如果还没加载过，去获取内容
+        if (!readmeLoaded) {
+            await fetchAndRenderReadme();
+        }
+    }
+}
+
+async function fetchAndRenderReadme() {
+    const contentDiv = document.getElementById('readmeContent');
+    
+    try {
+        // 添加时间戳参数 '?t=' + Date.now() 强制刷新缓存
+        const response = await fetch(REPO_README_URL + '?t=' + Date.now());
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status} (Check file path)`);
+        }
+        
+        const markdownText = await response.text();
+        
+        // 使用 marked 解析 (需要在 index.html 引入 marked.js)
+        if (typeof marked !== 'undefined') {
+            // 配置 marked 以允许 GFM (GitHub Flavored Markdown)
+            contentDiv.innerHTML = marked.parse(markdownText);
+            readmeLoaded = true;
+        } else {
+            contentDiv.innerHTML = "<p style='color:red'>Marked.js library not loaded.</p>";
+        }
+        
+    } catch (error) {
+        console.error("README Load Error:", error);
+        contentDiv.innerHTML = `
+            <div style="text-align:center; padding-top:50px; color:var(--text-secondary)">
+                <p>⚠️ 无法加载 README</p>
+                <p style="font-size:0.8rem; opacity:0.7">${error.message}</p>
+                <p style="font-size:0.8rem; color:#666">请确保 README.md 文件与 index.html 在同一目录下。</p>
+                <button class="btn btn-secondary" onclick="fetchAndRenderReadme()" style="margin:20px auto">重试</button>
+            </div>
+        `;
+    }
+}

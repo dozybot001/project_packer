@@ -6,14 +6,33 @@
     <title>Project Packer - AI 项目代码助手</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
+<div id="hiddenSidebar">
+    <div class="sidebar-content">
+        <button class="close-sidebar-btn" onclick="toggleSidebar()">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <div id="readmeContent" class="markdown-body">
+            <div class="loading-spinner">⏳ 正在加载 README...</div>
+        </div>
+    </div>
+</div>
+
+<div id="guideBookmark" onclick="toggleSidebar()">
+    <span class="bookmark-icon">📖</span>
+    <span class="bookmark-text">README</span>
+    <span class="bookmark-arrow">➜</span>
+</div>
+
 <div id="toast-container"></div>
 
-<div class="container">
+<div class="container" id="mainContainer">
     <header>
         <div class="logo-area">
             <h1>Project Packer</h1>
@@ -160,9 +179,7 @@
             </button>
         </div>
     </div>
-
 </div>
-
 <script type="text/javascript" src="main.js"></script>
 </body>
 </html>
